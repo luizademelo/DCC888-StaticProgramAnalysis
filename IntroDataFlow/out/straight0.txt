@@ -1,0 +1,2 @@
+Initial live set: ['a', 'b', 'c']
+c is used without being defined

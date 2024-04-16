@@ -1,13 +1,22 @@
 """
 This file implements a parser: a function that reads a text file, and returns
 a control-flow graph of instructions plus an environment mapping variables to
-integer values.
+integer values. The text file has the following format:
+
+    [First line] A dictionary describing the environment
+    [n-th line] The n-th instruction in our program.
+
+As an example, the program below sums up the numbers a, b and c:
+
+    {"a": 1, "b": 3, "c": 5}
+    x = add a b
+    l2 = x = add x c
 """
 
-from lang import *
+# from lang import Env, Inst
+from lang import * 
 
-
-def line2env(line):
+def line2env(line: str) -> Env:
     """
     Maps a string (the line) to a dictionary in python. This function will be
     useful to read the first line of the text file. This line contains the
@@ -59,4 +68,59 @@ def file2cfg_and_env(lines):
     # TODO: Imlement this method.
     env = line2env(lines[0])
     insts = []
+
+    insts_prev = []
+    
+    # a ideia é criar uma lista prévia de instruções e
+    # e depois passar pela lista fixando os Branches
+    
+    bt_count = 0
+    bt_dict = {}
+    for line in lines[1:]: 
+        tokens = line.split()
+        
+        if tokens[0] != 'bt':
+            instruction = tokensToInsts(tokens)
+        else:
+            instruction = Bt(tokens[1], None, None)
+            bt_dict[bt_count] = tokens
+            bt_count += 1
+        
+        insts_prev.append(instruction)
+        
+    
+    cnt = 0
+    for instruction, line in zip(insts_prev, lines[1:]): 
+        tokens = line.split()
+        
+        if tokens[0] == 'bt':
+            cond = tokens[1]
+            true_dst = int(tokens[2])
+            false_dst = cnt+1
+            instruction.add_true_next(insts_prev[true_dst])
+        
+        insts.append(instruction)
+        
+        if cnt > 0: 
+            insts[cnt-1].add_next(instruction)
+
+        
+        cnt +=1 
+
+
+
     return (env, insts)
+
+
+def tokensToInsts(tokens): 
+    if tokens[2] == 'add': 
+        return Add(tokens[0], tokens[3], tokens[4])
+
+    if tokens[2] == 'mul':
+        return Mul(tokens[0], tokens[3], tokens[4])
+            
+    if tokens[2] == 'lth':
+        return Lth(tokens[0], tokens[3], tokens[4])
+            
+    if tokens[2] == 'geq': 
+        return Geq(tokens[0], tokens[3], tokens[4])

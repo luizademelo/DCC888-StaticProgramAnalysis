@@ -226,7 +226,7 @@ class ReachingDefs_IN_Eq(IN_Eq):
 
 
 class LivenessAnalysisIN_Eq(IN_Eq):
-    def eval_aux(self, data_flow_env: dict[str, set]) -> None:
+    def eval_aux(self, data_flow_env):
         """
         Produces the IN set of liveness analysis. The IN set is given by the
         equation below, considering the instruction `p) v = E`:
@@ -241,6 +241,16 @@ class LivenessAnalysisIN_Eq(IN_Eq):
             ['a', 'b']
         """
         # TODO: implement this method
+        solution = set()
+        solution = solution.union(self.inst.uses())
+
+        for inst in self.inst.nexts:
+            solution = solution.union(data_flow_env[name_in(inst.ID)])
+
+        if isinstance(self.inst, BinOp):
+            solution.discard(self.inst.dst)
+        
+        return solution
 
     def __str__(self):
         """
@@ -258,7 +268,8 @@ class LivenessAnalysisIN_Eq(IN_Eq):
 
 
 class LivenessAnalysisOUT_Eq(OUT_Eq):
-    def eval_aux(self, data_flow_env: dict[str, set]) -> None:
+    
+    def eval_aux(self, data_flow_env):
         """
         Computes the join (or meet) operation of the liveness analysis. The
         join of a point `p` is computed in the following way:
@@ -275,6 +286,11 @@ class LivenessAnalysisOUT_Eq(OUT_Eq):
             ['a', 'c', 'd']
         """
         # TODO: implement this method
+        solution = set()
+        for inst in self.inst.nexts:
+            solution = solution.union(data_flow_env[name_in(inst.ID)])
+        
+        return solution
 
     def __str__(self):
         """
@@ -297,6 +313,7 @@ def reaching_defs_constraint_gen(insts):
     """
     Builds a list of equations to solve Reaching-Definition Analysis for the
     given set of instructions.
+    Maps instructions to equations.
 
     Example:
         >>> Inst.next_index = 0
@@ -316,10 +333,11 @@ def reaching_defs_constraint_gen(insts):
     return in0 + in1 + out
 
 
-def liveness_constraint_gen(insts: list[Inst]) -> list[DataFlowEq]:
+def liveness_constraint_gen(insts):
     """
-    Builds a list of liness-analysis equations extracted from the instructions
+    Builds a list of liveness-analysis equations extracted from the instructions
     in the list `insts`
+    Maps instructions to equations.
 
     Example:
         >>> Inst.next_index = 0
@@ -332,7 +350,11 @@ def liveness_constraint_gen(insts: list[Inst]) -> list[DataFlowEq]:
         "IN_0: (OUT_0 - {'c'}) + ['a', 'b'] IN_1: (OUT_1 - {'d'}) + ['a', 'c']"
     """
     # TODO: implement this method.
-    return []
+    # print(LivenessAnalysisIN_Eq(insts[0]))
+    out = [LivenessAnalysisIN_Eq(i) for i in insts]
+    # print(out)
+    # return out
+    return out
 
 
 def abstract_interp(equations):

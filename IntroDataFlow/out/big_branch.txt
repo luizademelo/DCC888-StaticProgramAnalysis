@@ -1,0 +1,2 @@
+Initial live set: ['mintwo', 'nextfib', 'one', 'three', 'two', 'zero']
+nextfib is used without being defined
